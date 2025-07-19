@@ -1,10 +1,4 @@
-const XMLReadyStateMap = [
-  'UNSENT',
-  'OPENED',
-  'HEADERS_RECEIVED',
-  'LOADING',
-  'DONE',
-];
+const XMLReadyStateMap = ['UNSENT', 'OPENED', 'HEADERS_RECEIVED', 'LOADING', 'DONE'];
 
 class EventSource {
   ERROR = -1;
@@ -24,6 +18,7 @@ class EventSource {
       open: [],
       message: [],
       error: [],
+      done: [],
       close: [],
     };
 
@@ -31,12 +26,22 @@ class EventSource {
     this.timeout = options.timeout ?? 0;
     this.timeoutBeforeConnection = options.timeoutBeforeConnection ?? 500;
     this.withCredentials = options.withCredentials || false;
-    this.headers = options.headers || {};
     this.body = options.body || undefined;
     this.debug = options.debug || false;
     this.interval = options.pollingInterval ?? 5000;
     this.lineEndingCharacter = options.lineEndingCharacter || null;
     this.autoConnect = options.autoConnect ?? true;
+
+    const defaultHeaders = {
+      Accept: 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'X-Requested-With': 'XMLHttpRequest',
+    };
+
+    this.headers = {
+      ...defaultHeaders,
+      ...options.headers,
+    };
 
     this._xhr = null;
     this._pollTimer = null;
@@ -77,12 +82,8 @@ class EventSource {
         this._xhr.withCredentials = true;
       }
 
-      this._xhr.setRequestHeader('Accept', 'text/event-stream');
-      this._xhr.setRequestHeader('Cache-Control', 'no-cache');
-      this._xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-
-      if (this.headers) {
-        for (const [key, value] of Object.entries(this.headers)) {
+      for (const [key, value] of Object.entries(this.headers)) {
+        if (value !== undefined && value !== null) {
           this._xhr.setRequestHeader(key, value);
         }
       }
@@ -100,7 +101,11 @@ class EventSource {
 
         const xhr = this._xhr;
 
-        this._logDebug(`[EventSource][onreadystatechange] ReadyState: ${XMLReadyStateMap[xhr.readyState] || 'Unknown'}(${xhr.readyState}), status: ${xhr.status}`);
+        this._logDebug(
+          `[EventSource][onreadystatechange] ReadyState: ${XMLReadyStateMap[xhr.readyState] || 'Unknown'}(${
+            xhr.readyState
+          }), status: ${xhr.status}`,
+        );
 
         if (![XMLHttpRequest.DONE, XMLHttpRequest.LOADING].includes(xhr.readyState)) {
           return;
@@ -118,6 +123,7 @@ class EventSource {
           if (xhr.readyState === XMLHttpRequest.DONE) {
             this._logDebug('[EventSource][onreadystatechange][DONE] Operation done.');
             this._pollAgain(this.interval, false);
+            this.dispatch('done', { type: 'done' });
           }
         } else if (xhr.status !== 0) {
           this.status = this.ERROR;
@@ -183,10 +189,17 @@ class EventSource {
     if (this.lineEndingCharacter === null) {
       const detectedNewlineChar = this._detectNewlineChar(response);
       if (detectedNewlineChar !== null) {
-        this._logDebug(`[EventSource] Automatically detected lineEndingCharacter: ${JSON.stringify(detectedNewlineChar).slice(1, -1)}`);
+        this._logDebug(
+          `[EventSource] Automatically detected lineEndingCharacter: ${JSON.stringify(detectedNewlineChar).slice(
+            1,
+            -1,
+          )}`,
+        );
         this.lineEndingCharacter = detectedNewlineChar;
       } else {
-        console.warn("[EventSource] Unable to identify the line ending character. Ensure your server delivers a standard line ending character: \\r\\n, \\n, \\r, or specify your custom character using the 'lineEndingCharacter' option.");
+        console.warn(
+          "[EventSource] Unable to identify the line ending character. Ensure your server delivers a standard line ending character: \\r\\n, \\n, \\r, or specify your custom character using the 'lineEndingCharacter' option.",
+        );
         return;
       }
     }
@@ -197,6 +210,7 @@ class EventSource {
     }
 
     const parts = response.substring(this._lastIndexProcessed, indexOfDoubleNewline).split(this.lineEndingCharacter);
+
     this._lastIndexProcessed = indexOfDoubleNewline;
 
     let type = undefined;

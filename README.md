@@ -51,10 +51,23 @@ es.addEventListener("error", (event) => {
   }
 });
 
+es.addEventListener("done", (event) => {
+  console.log("Done SSE connection.");
+});
+
 es.addEventListener("close", (event) => {
   console.log("Close SSE connection.");
 });
 ```
+
+### Done vs Close
+
+`done` events will fire when server closes the connection.
+By default, the client will automatically reconnect when this happens.
+You can disable reconnections by setting the `pollingInterval` option to `0`.
+`close` events will fire when the connection is terminated by the client, using `.close()`.
+
+### Headers and params
 
 If you want to use Bearer token and/or topics, look at this example (TypeScript):
 
@@ -364,6 +377,40 @@ export interface CustomEvent<E extends string> {
   url: string;
 }
 ```
+
+## 📱 Managing SSE with App State in React Native
+
+> **Problem reference:** By default, the library does not automatically close the connection when the app goes to sleep (background/inactive), nor does it recognize that the connection was lost during sleep. Therefore, it cannot re-establish the connection when the app becomes active after sleep mode. Also, any set timeout is killed while the app is in sleep mode.
+
+If you want to automatically close and reopen the SSE connection when your app goes to the background or returns to the foreground, you can use the `AppState` API from React Native. This helps save resources and avoid unnecessary network usage when your app is not active.
+
+Add the following logic to your component:
+
+```js
+import { useEffect } from 'react';
+import { AppState } from 'react-native';
+
+// ...
+// `es` is your EventSource instance
+
+useEffect(() => {
+  const appStateSubscription = AppState.addEventListener('change', (nextAppState) => {
+    if (nextAppState === 'active') {
+      // App became active, reconnect SSE
+      es.open();
+    } else if (nextAppState === 'background' || nextAppState === 'inactive') {
+      // App went to background, close SSE connection
+      es.close();
+    }
+  });
+
+  return () => {
+    appStateSubscription.remove();
+  };
+}, []);
+```
+
+> **Note:** This approach keeps the library simple and gives you full control over the connection lifecycle in your app. No extra dependencies or config options are required.
 
 ## 👏 Contribution
 
