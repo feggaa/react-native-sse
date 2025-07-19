@@ -54,6 +54,7 @@ export interface EventSourceOptions {
   debug?: boolean;
   pollingInterval?: number;
   lineEndingCharacter?: string;
+  autoConnect?: boolean;
 }
 
 type BuiltInEventMap = {
@@ -77,6 +78,7 @@ declare class EventSource<E extends string = never> {
   removeEventListener<T extends EventType<E>>(type: T, listener: EventSourceListener<E, T>): void;
   removeAllEventListeners<T extends EventType<E>>(type?: T): void;
   dispatch<T extends EventType<E>>(type: T, data: EventSourceEvent<T>): void;
+  isConnected : boolean;
 }
 
 export default EventSource;
