@@ -9,13 +9,13 @@ We use XMLHttpRequest to establish and handle an SSE connection, so you don't ne
 ### Yarn
 
 ```bash
-yarn add react-native-sse
+yarn add @laidfeggaa/react-native-sse
 ```
 
 ### NPM
 
 ```bash
-npm install --save react-native-sse
+npm install --save @laidfeggaa/react-native-sse
 ```
 
 ## 🎉 Usage
@@ -25,13 +25,13 @@ We are using Server-Sent Events as a convenient way of establishing and handling
 ### Import
 
 ```js
-import EventSource from "react-native-sse";
+import EventSource from "@laidfeggaa/react-native-sse";
 ```
 
 ### Connection and listeners
 
 ```js
-import EventSource from "react-native-sse";
+import EventSource from "@laidfeggaa/react-native-sse";
 
 const es = new EventSource("https://your-sse-server.com/.well-known/mercure");
 
@@ -74,7 +74,7 @@ If you want to use Bearer token and/or topics, look at this example (TypeScript)
 ```typescript
 import React, { useEffect, useState } from "react";
 import { View, Text } from "react-native";
-import EventSource, { EventSourceListener } from "react-native-sse";
+import EventSource, { EventSourceListener } from "@laidfeggaa/react-native-sse";
 import "react-native-url-polyfill/auto"; // Use URL polyfill in React Native
 
 interface Book {
@@ -208,16 +208,125 @@ const options: EventSourceOptions = {
   body: undefined, // Your request body sent on connection. Default: undefined
   debug: false, // Show console.debug messages for debugging purpose. Default: false
   pollingInterval: 5000, // Time (ms) between reconnections. If set to 0, reconnections will be disabled. Default: 5000
-  lineEndingCharacter: null // Character(s) used to represent line endings in received data. Common values: '\n' for LF (Unix/Linux), '\r\n' for CRLF (Windows), '\r' for CR (older Mac). Default: null (Automatically detect from event)
+  lineEndingCharacter: null, // Character(s) used to represent line endings in received data. Common values: '\n' for LF (Unix/Linux), '\r\n' for CRLF (Windows), '\r' for CR (older Mac). Default: null (Automatically detect from event)
+  autoConnect: true // Automatically connect on instantiation. If set to false, you must call es.open() manually. Default: true
 }
 ```
 
-## 🚀 Advanced usage with TypeScript
+## � Connection Management
+
+### Checking Connection Status
+
+You can check if the EventSource is currently connected using the `isConnected` property:
+
+```js
+import EventSource from "@laidfeggaa/react-native-sse";
+
+const es = new EventSource("https://your-sse-server.com/.well-known/mercure");
+
+// Check connection status
+console.log("Is connected:", es.isConnected); // false initially
+
+es.addEventListener("open", (event) => {
+  console.log("Connection opened, isConnected:", es.isConnected); // true
+});
+
+es.addEventListener("close", (event) => {
+  console.log("Connection closed, isConnected:", es.isConnected); // false
+});
+```
+
+### Manual Connection Control
+
+By default, EventSource automatically connects when instantiated. You can disable this behavior using the `autoConnect` option:
+
+```js
+import EventSource from "@laidfeggaa/react-native-sse";
+
+// Create EventSource without auto-connecting
+const es = new EventSource("https://your-sse-server.com/.well-known/mercure", {
+  autoConnect: false
+});
+
+console.log("Is connected:", es.isConnected); // false
+
+// Manually connect when needed
+es.open();
+
+// You can also check connection status before opening
+if (!es.isConnected) {
+  es.open();
+}
+```
+
+### Conditional Connection Management
+
+This is useful for conditional connections based on app state or user preferences:
+
+```typescript
+import React, { useEffect, useState } from "react";
+import { Button, View, Text } from "react-native";
+import EventSource from "@laidfeggaa/react-native-sse";
+
+const ConnectionManager: React.FC = () => {
+  const [es, setEs] = useState<EventSource | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+
+  useEffect(() => {
+    const eventSource = new EventSource("https://your-sse-server.com/.well-known/mercure", {
+      autoConnect: false // Don't connect automatically
+    });
+
+    eventSource.addEventListener("open", () => {
+      setIsConnected(eventSource.isConnected);
+    });
+
+    eventSource.addEventListener("close", () => {
+      setIsConnected(eventSource.isConnected);
+    });
+
+    eventSource.addEventListener("message", (event) => {
+      console.log("Received:", event.data);
+    });
+
+    setEs(eventSource);
+
+    return () => {
+      eventSource.removeAllEventListeners();
+      eventSource.close();
+    };
+  }, []);
+
+  const handleConnect = () => {
+    if (es && !es.isConnected) {
+      es.open();
+    }
+  };
+
+  const handleDisconnect = () => {
+    if (es && es.isConnected) {
+      es.close();
+    }
+  };
+
+  return (
+    <View>
+      <Text>Connection Status: {isConnected ? "Connected" : "Disconnected"}</Text>
+      <Button title="Connect" onPress={handleConnect} disabled={isConnected} />
+      <Button title="Disconnect" onPress={handleDisconnect} disabled={!isConnected} />
+    </View>
+  );
+};
+
+export default ConnectionManager;
+```
+
+## �🚀 Advanced usage with TypeScript
 
 Using EventSource you can handle custom events invoked by the server:
 
 ```typescript
-import EventSource, { EventSourceListener, EventSourceEvent } from "react-native-sse";
+import EventSource, { EventSourceListener, EventSourceEvent } from "@laidfeggaa/react-native-sse";
 
 type MyCustomEvents = "ping" | "clientConnected" | "clientDisconnected";
 
@@ -245,7 +354,7 @@ es.addEventListener("clientDisconnected", (event) => {
 Using one listener for all events:
 
 ```typescript
-import EventSource, { EventSourceListener } from "react-native-sse";
+import EventSource, { EventSourceListener } from "@laidfeggaa/react-native-sse";
 
 type MyCustomEvents = "ping" | "clientConnected" | "clientDisconnected";
 
@@ -270,7 +379,7 @@ es.addEventListener('ping', listener);
 Using generic type for one event:
 
 ```typescript
-import EventSource, { EventSourceListener, EventSourceEvent } from "react-native-sse";
+import EventSource, { EventSourceListener, EventSourceEvent } from "@laidfeggaa/react-native-sse";
 
 type MyCustomEvents = "ping" | "clientConnected" | "clientDisconnected";
 
@@ -298,7 +407,7 @@ If you want to use ChatGPT with React Native, you can use the following example:
 ```typescript
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
-import EventSource from "react-native-sse";
+import EventSource from "@laidfeggaa/react-native-sse";
 
 const OpenAIToken = '[Your OpenAI token]';
 

@@ -1,14 +1,27 @@
 {
+<<<<<<< Updated upstream
   "name": "react-native-sse",
   "version": "1.2.1",
+=======
+  "name": "@laidfeggaa/react-native-sse",
+  "version": "1.2.3",
+>>>>>>> Stashed changes
   "description": "EventSource implementation for React Native. Server-Sent Events (SSE) for iOS and Android.",
   "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/binaryminds/react-native-sse.git"
+    "url": "git+https://github.com/feggaa/react-native-sse.git"
   },
   "keywords": [
     "react-native",
@@ -22,9 +35,12 @@
     "android"
   ],
   "author": "BinaryMinds",
+  "contributors": [
+    "feggaa"
+  ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/binaryminds/react-native-sse/issues"
+    "url": "https://github.com/feggaa/react-native-sse/issues"
   },
-  "homepage": "https://github.com/binaryminds/react-native-sse#readme"
+  "homepage": "https://github.com/feggaa/react-native-sse#readme"
 }
