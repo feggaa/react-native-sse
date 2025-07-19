@@ -36,6 +36,7 @@ class EventSource {
     this.debug = options.debug || false;
     this.interval = options.pollingInterval ?? 5000;
     this.lineEndingCharacter = options.lineEndingCharacter || null;
+    this.autoConnect = options.autoConnect ?? true;
 
     this._xhr = null;
     this._pollTimer = null;
@@ -51,7 +52,7 @@ class EventSource {
       this.url = url;
     }
 
-    this._pollAgain(this.timeoutBeforeConnection, true);
+    if(this.autoConnect) this._pollAgain(this.timeoutBeforeConnection, true);
   }
 
   _pollAgain(time, allowZero) {
@@ -313,6 +314,9 @@ class EventSource {
     if (this._xhr) {
       this._xhr.abort();
     }
+  }
+  get isConnected() {
+    return this.status === this.OPEN;
   }
 }
 
